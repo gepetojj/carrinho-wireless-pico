@@ -98,11 +98,9 @@
         <h1>Painel de controle do Carrinho</h1>
         <main>
             <div>
-                <h2>Comunicação por WiFi: <span id="wifiMenuSelected"></span></h2>
-                <h2>Status do WiFi: <span id="wifiStatus"></span></h2>
-                <h2>Velocidade máxima dos motores: <span id="motorsVelocity">0</span></h2>
-                <h2>Clientes conectados: <span id="clients">0</span></h2>
-                <h2>Perda de pacotes: <span id="packetloss">Não disponível</span></h2>
+                <h2>Status do WiFi: <span id="wifiStatus">Não disponível</span></h2>
+                <h2>Velocidade máxima dos motores: <span id="motorsVelocity">Não disponível</span></h2>
+                <h2>Clientes conectados: <span id="clients">Não disponível</span></h2>
             </div>
             <div>
                 <h2>RAM total: <span id="espHeap">0</span></h2>
@@ -112,9 +110,6 @@
                 <h2>MAC: <span id="mac"></span></h2>
             </div>
             <div style="display: flex; flex-direction: column; gap: 1rem">
-                <h2>Sistema irá resetar: <span id="erasingMemory"></span></h2>
-                <button id="reset">Iniciar reset</button>
-                <button id="espnow">Trocar para ESP-NOW</button>
                 <button id="stopmotors">Parar motores</button>
             </div>
         </main>
@@ -141,34 +136,6 @@
                     i = Math.floor(Math.log(bytes) / Math.log(k));
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
             }
-
-            let lastPacketMS = new Date();
-            let diffAverage = 0;
-            setInterval(() => {
-                const packetMS = new Date();
-                let diff = Math.abs(lastPacketMS - packetMS);
-                diffAverage = (diffAverage + diff) / 2;
-                const percentage = (diffAverage * 100) / 1000;
-
-                const packetloss = document.getElementById("packetloss");
-                packetloss.innerText = `${new Intl.NumberFormat("pt-BR", {
-                    style: "decimal",
-                    maximumFractionDigits: 1,
-                }).format(percentage)}% (${new Intl.NumberFormat("pt-BR", {
-                    style: "decimal",
-                    maximumFractionDigits: 1,
-                }).format(diffAverage)})`;
-
-                if (diffAverage < 200) {
-                    packetloss.style.color = "green";
-                }
-                if (diffAverage > 200 && diffAverage < 800) {
-                    packetloss.style.color = "yellow";
-                }
-                if (diffAverage > 800) {
-                    packetloss.style.color = "red";
-                }
-            }, 100);
         </script>
 
         <script defer>
@@ -181,26 +148,22 @@
 
             socket.onmessage = (event) => {
                 lastPacketMS = new Date();
-                const data = JSON.parse(event.data);
+                const data = event.data;
+                const metrics = data.split("::");
 
-                const wifiMenuSelected = data.wifiMenuSelected;
-                const wifiStatus = data.wifiStatus;
-                const motorsVelocity = data.motorsVelocity;
+                const wifiStatus = metrics[0];
+                const motorsVelocity = metrics[1];
                 const motorsVelocityPercentage = new Intl.NumberFormat("pt-BR", {
                     style: "decimal",
                     maximumFractionDigits: 1,
                 }).format((motorsVelocity * 100) / 255);
-                const clients = data.clients;
-                const espHeap = data.espHeap;
-                const espFreeHeap = data.espFreeHeap;
-                const espUsedHeap = espHeap - espFreeHeap;
-                const ip = data.ip;
-                const mac = data.mac;
-                const erasingMemory = data.erasingMemory;
+                const clients = metrics[2];
+                const espHeap = metrics[3];
+                const espUsedHeap = metrics[4];
+                const espFreeHeap = espHeap - espUsedHeap;
+                const ip = metrics[5];
+                const mac = metrics[6];
 
-                document.getElementById("wifiMenuSelected").innerText = wifiMenuSelected
-                    ? "Ativada"
-                    : "Desativada";
                 document.getElementById(
                     "motorsVelocity"
                 ).innerText = `${motorsVelocity} (${motorsVelocityPercentage}%)`;
@@ -211,11 +174,6 @@
                 document.getElementById("espUsedHeap").innerText = formatBytes(espUsedHeap);
                 document.getElementById("ip").innerText = ip;
                 document.getElementById("mac").innerText = mac;
-
-                const erasing = document.getElementById("erasingMemory");
-                erasing.innerText = erasingMemory ? "SIM" : "Não";
-                erasing.style.color = erasingMemory ? "red" : "green";
-                erasing.style.scale = "2";
             };
 
             socket.onclose = () => {
@@ -230,17 +188,13 @@
                 alertbox.innerText = `Falha na conexão: ${error.error}`;
             };
 
-            document.getElementById("reset").onclick = () => {
-                socket.send("reset");
-            };
-
-            document.getElementById("espnow").onclick = () => {
-                socket.send("enmenu");
-            };
-
             document.getElementById("stopmotors").onclick = () => {
                 socket.send("stop");
             };
+            
+            setInterval(() => {
+                socket.send("")
+            }, 100)
         </script>
     </body>
 </html>

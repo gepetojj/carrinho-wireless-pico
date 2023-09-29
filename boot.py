@@ -1,6 +1,9 @@
 import network
 from machine import Pin
 import time
+import gc
+
+gc.enable()
 
 SSID = "Carrinho Wireless PICO"
 SECURITY = 0

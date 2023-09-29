@@ -1,36 +1,38 @@
 from microdot_asyncio import Microdot, Response, send_file
 from microdot_utemplate import render_template
 from microdot_asyncio_websocket import with_websocket
-import time
+import controls
+
+right_wheel = controls.Motor(12, 13)
+left_wheel = controls.Motor(14, 15)
 
 app = Microdot()
 Response.default_content_type = 'text/html'
-
 
 @app.route('/')
 async def index(request):
     return render_template('index.html')
 
 @app.route('/console')
-async def index(request):
+async def console(request):
     return render_template('console.html')
 
 @app.route('/ws')
 @with_websocket
-async def send_metrics(request, ws):
+async def websocket(request, ws):
     while True:
-#         data = await ws.receive()  // Só se tivesse recebendo mensagens
-        time.sleep(.1)
-        await ws.send({"wifiMenuSelected": True, "erasingMemory": False, "motorsVelocity": -999, "wifiStatus": 0})
+        data = await ws.receive()
+        data = str(data)
+        
+        if data in controls.AVAILABLE_CONTROLS:
+            controls.move(data, right_wheel, left_wheel)
+                
+        await ws.send("{'wifiMenuSelected': true, 'erasingMemory': false, 'motorsVelocity': -999, 'wifiStatus': 0}")
 
-@app.get('/shutdown')
+@app.route('/shutdown')
 def shutdown(request):
     request.app.shutdown()
-    return "Encerrando conexão..."
+    return 'Encerrando conexão...'
 
 
-if __name__ == "__main__":
-    try:
-        app.run()
-    except KeyboardInterrupt:
-        pass
+app.run(host="0.0.0.0", port=80, debug=True)

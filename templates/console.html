@@ -144,6 +144,9 @@
             socket.onopen = () => {
                 console.log("Conexão WebSocket aberta com sucesso.");
                 alertbox.style.display = "none";
+                setInterval(() => {
+                    socket.send("");
+                }, 100)
             };
 
             socket.onmessage = (event) => {
@@ -167,7 +170,7 @@
                 document.getElementById(
                     "motorsVelocity"
                 ).innerText = `${motorsVelocity} (${motorsVelocityPercentage}%)`;
-                document.getElementById("wifiStatus").innerText = WIFI_STATUS_ENUM[wifiStatus];
+                document.getElementById("wifiStatus").innerText = wifiStatus;
                 document.getElementById("clients").innerText = clients;
                 document.getElementById("espHeap").innerText = formatBytes(espHeap);
                 document.getElementById("espFreeHeap").innerText = formatBytes(espFreeHeap);
@@ -191,10 +194,6 @@
             document.getElementById("stopmotors").onclick = () => {
                 socket.send("stop");
             };
-            
-            setInterval(() => {
-                socket.send("")
-            }, 100)
         </script>
     </body>
 </html>

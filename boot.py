@@ -18,9 +18,9 @@ def init_ap():
     nic.config(ssid=SSID, security=SECURITY)
     nic.active(True)
     
-    print("[WiFi] Modo AP iniciado.")
-    print("[WiFi] SSID:", SSID)
-    print("[WiFi] IFConfig:", nic.ifconfig())
+    print("[Boot] Modo AP iniciado.")
+    print("[Boot] SSID:", SSID)
+    print("[Boot] IFConfig:", nic.ifconfig())
     
     for x in range(5):
         builtin_led.off()
@@ -29,5 +29,5 @@ def init_ap():
         time.sleep(.15)
     
     
-print("[WiFi] Configurando a conexão WiFi...")
+print("[Boot] Configurando a conexão WiFi...")
 init_ap()
